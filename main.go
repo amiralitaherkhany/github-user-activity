@@ -15,7 +15,6 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println("your username is", userName)
 	numberOfActivities, err := getUserGithubActivity(userName)
 	if err != nil {
 		log.Fatalln(err)
