@@ -10,37 +10,57 @@ import (
 	"os"
 )
 
+type GithubEvent struct {
+	Type string `json:"type"`
+}
+
 func main() {
 	userName, err := getUserName()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	numberOfActivities, err := getUserGithubActivity(userName)
+	userActivities, err := getUserGithubActivities(userName)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println("Number of activities is", numberOfActivities)
+	fmt.Println(len(*userActivities), "Events:")
+	cm := categorizeGithubEvents(userActivities)
+	for eventType, eventCount := range cm {
+		fmt.Printf("%s -> %d \n", eventType, eventCount)
+	}
 }
 
-func getUserGithubActivity(username string) (uint64, error) {
+func categorizeGithubEvents(g *[]GithubEvent) map[string]uint {
+	categories := make(map[string]uint)
+	for _, event := range *g {
+		_, ok := categories[event.Type]
+		if ok {
+			categories[event.Type]++
+		} else {
+			categories[event.Type] = 1
+		}
+	}
+	return categories
+}
+
+func getUserGithubActivities(username string) (*[]GithubEvent, error) {
 	url := fmt.Sprintf("https://api.github.com/users/%s/events", username)
 	resp, err := http.Get(url)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		return 0, fmt.Errorf("Response failed with status code: %d\n", resp.StatusCode)
+		return nil, fmt.Errorf("Response failed with status code: %d\n", resp.StatusCode)
 	}
 	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 
-	var data []interface{}
+	var data []GithubEvent
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		return 0, errors.New("error in parsing data")
+		return nil, errors.New("error in parsing data")
 	}
-	return uint64(len(data)), nil
-
+	return &data, nil
 }
 
 func getUserName() (string, error) {
