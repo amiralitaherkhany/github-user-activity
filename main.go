@@ -11,7 +11,9 @@ import (
 )
 
 type GithubEvent struct {
-	Type string `json:"type"`
+	Type      string `json:"type"`
+	IsPublic  bool   `json:"public"`
+	CreatedAt string `json:"created_at"`
 }
 
 func main() {
@@ -49,17 +51,27 @@ func getUserGithubActivities(username string) (*[]GithubEvent, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("Response failed with status code: %d\n", resp.StatusCode)
 	}
+
 	body, err := io.ReadAll(resp.Body)
-	resp.Body.Close()
+	if err != nil {
+		return nil, fmt.Errorf("error in reading from response: %s\n", err)
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	var data []GithubEvent
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		return nil, errors.New("error in parsing data")
+		return nil, errors.New("error in parsing json data")
 	}
+
 	return &data, nil
 }
 
