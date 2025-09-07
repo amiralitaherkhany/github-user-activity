@@ -4,17 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/amiralitaherkhany/github-user-activity/entity"
 	"io"
 	"log"
 	"net/http"
 	"os"
 )
-
-type GithubEvent struct {
-	Type      string `json:"type"`
-	IsPublic  bool   `json:"public"`
-	CreatedAt string `json:"created_at"`
-}
 
 func main() {
 	userName, err := getUserName()
@@ -32,7 +27,7 @@ func main() {
 	}
 }
 
-func categorizeGithubEvents(g *[]GithubEvent) map[string]uint {
+func categorizeGithubEvents(g *[]entity.GithubEvent) map[string]uint {
 	categories := make(map[string]uint)
 	for _, event := range *g {
 		_, ok := categories[event.Type]
@@ -45,7 +40,7 @@ func categorizeGithubEvents(g *[]GithubEvent) map[string]uint {
 	return categories
 }
 
-func getUserGithubActivities(username string) (*[]GithubEvent, error) {
+func getUserGithubActivities(username string) (*[]entity.GithubEvent, error) {
 	url := fmt.Sprintf("https://api.github.com/users/%s/events", username)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -66,7 +61,7 @@ func getUserGithubActivities(username string) (*[]GithubEvent, error) {
 		return nil, err
 	}
 
-	var data []GithubEvent
+	var data []entity.GithubEvent
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		return nil, errors.New("error in parsing json data")
